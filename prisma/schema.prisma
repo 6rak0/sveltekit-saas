@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String              @id @unique
+  username       String              @unique
+  auth_session   Session[]
+  key            Key[]
+  membershipId   Int?
+  membership     Membership?         @relation(references: [id], fields: [membershipId])
+  customerId     String?
+  subscriptionId String?
+  status         SubscriptionStatus?
+}
+
+model Session {
+  id             String @id @unique
+  user_id        String
+  active_expires BigInt
+  idle_expires   BigInt
+  user           User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model Key {
+  id              String  @id @unique
+  hashed_password String?
+  user_id         String
+  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model Membership {
+  id      Int    @id @default(autoincrement())
+  handle  String @unique
+  name    String
+  price   Int
+  priceId String @unique
+  users   User[]
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  UNPAID
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  PAUSED
+}
